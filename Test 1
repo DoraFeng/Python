@@ -1,0 +1,104 @@
+
+#采购与招标信息网
+#http://www.chinabidding.com.cn/
+
+import urllib.request
+import re
+import datetime
+from lxml import etree
+import ssl
+ssl._create_default_http_context = ssl._create_unverified_context
+
+#定义查询的关键词
+keywdL=[‘地铁’, '采购', '长期']
+
+#定义查询日期格式
+dateFormat='%Y-%m-%d'
+
+#获取系统当前时间
+def get_today():
+    h=datetime.datetime.now()
+    today=h.strftime(dateFormat)
+    return today
+    
+#获取查询起始时间
+def get_startdate():
+    h=datetime.datetime.now()-datetime.timedelta(days=10)
+    startdate=h.strftime(dateFormat)
+    return startdate
+    
+#获取系统当前时间字符串
+def get_day():
+    h=datetime.datetime.now()
+    today=h.strftime('%Y%m%d')
+    return today
+    
+#定义目标文件名
+fileName1='采购与招标信息网'+get_day()+'.txt'
+
+#打开网页，获取网页内容
+        headers=("user-agent","Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0")
+        opener=urllib.request.build_opener()
+        opener.addheaders=[headers]
+        urllib.request.install_opener(opener)
+        data=urllib.request.urlopen(url).read().decode("utf-8","ignore")
+        return data
+    except Exception as e:
+        print(str(e))
+
+#获取采购与招标网的招标信息
+def get_content1(url):
+    try:
+        data=url_open(url)
+        url_pat='<td><a target="_blank" href="(.*?)"'
+        title_pat='<td><a target="_blank" href=".*?">(.*?)</a></td>'
+        time_pat='<div style="display: none">(.*?)</div>'
+
+        urlL=re.compile(url_pat).findall(data)
+        titleL=re.compile(title_pat).findall(data)
+        timeL=re.compile(time_pat).findall(data)
+        if(len(urlL)>0):
+            for i in range(len(urlL)):
+                page_url="https://www.chinabidding.cn"+urlL[i]
+                page_title=titleL[i]
+                time=timeL[i]
+                with open(fileName1,'a') as fh:                
+                    fh.write("招标主题："+page_title+"\n")
+                    fh.write("招标内容："+page_url+"\n")
+                    fh.write("发布时间："+time+"\n")
+                    fh.write("------------------------\n")
+    except Exception as e:
+        print(str(e))
+
+#将数据保存到文本中
+def caigouwang():
+    try:
+        with open(fileName1,'a') as f:
+            f.write("采购与招标网:https://www.chinabidding.cn/\n")
+        for keywd in keywdL:
+            keywords=urllib.request.quote(keywd)
+            with open(fileName1,'a') as fh:
+                fh.write("关键词："+keywd+"\n")
+            url="https://www.chinabidding.cn/search/searchzbw/search2?keywords="+keywords+"&table_type=&areaid=&categoryid=&b_date=week"
+            print("正在查询关键词："+keywd)
+            get_content1(url)
+        print("完成")
+    except Exception as e:
+        print(e)
+
+if __name__=='__main__':
+    print("-----开始爬取采购与招标网------")
+    caigouwang()
+
+
+
+
+
+
+
+
+
+
+
+
+
